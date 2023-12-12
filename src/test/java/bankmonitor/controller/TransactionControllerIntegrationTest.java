@@ -141,7 +141,7 @@ class TransactionControllerIntegrationTest {
         Transaction createdTransaction = given()
                 .contentType(ContentType.JSON)
                 .when()
-                .body("{ \"amount\": 100, \"reference\": \"BM_2023_101\" }")
+                .body("{ \"amount\": 3333, \"reference\": \"\", \"sender\": \"Bankmonitor\" }")
                 .post(PATH_TRANSACTIONS)
                 .then()
                 .assertThat().statusCode(HttpStatus.OK.value())
@@ -167,7 +167,8 @@ class TransactionControllerIntegrationTest {
                 .assertThat().statusCode(HttpStatus.OK.value())
                 .extract().as(Transaction.class);
 
-        JSONAssert.assertEquals(updatedData, result.data(), true);
+        String expected = "{ \"amount\": 10000, \"reference\": \"NewRef\", \"sender\": \"Bankmonitor\" }";
+        JSONAssert.assertEquals(expected, result.data(), true);
     }
 
 }

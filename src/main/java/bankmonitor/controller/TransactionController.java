@@ -1,14 +1,13 @@
 package bankmonitor.controller;
 
 import bankmonitor.dto.Transaction;
+import bankmonitor.dto.TransactionPatchRequest;
 import bankmonitor.model.TransactionEntity;
 import bankmonitor.service.TransactionService;
 import org.json.JSONObject;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -45,35 +44,12 @@ public class TransactionController {
         TransactionEntity data = new TransactionEntity();
         data.setData(jsonData);
 
-        return mapTransaction(transactionService.save(data));
+        return mapTransaction(transactionService.createOrUpdate(data));
     }
 
     @PutMapping("/transactions/{id}")
-    public ResponseEntity<Transaction> updateTransaction(@PathVariable Long id, @RequestBody String update) {
-
-        JSONObject updateJson = new JSONObject(update);
-
-        Optional<TransactionEntity> data = transactionService.findById(id);
-
-        if (!data.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-
-        TransactionEntity transactionEntity = data.get();
-        JSONObject trdata = new JSONObject(transactionEntity.getData());
-
-        if (updateJson.has("amount")) {
-            trdata.put("amount", updateJson.getInt("amount"));
-        }
-
-        if (updateJson.has(REFERENCE_KEY)) {
-            trdata.put(REFERENCE_KEY, updateJson.getString(REFERENCE_KEY));
-        }
-
-        transactionEntity.setData(trdata.toString());
-
-        TransactionEntity updatedTransactionEntity = transactionService.save(transactionEntity);
-        return ResponseEntity.ok(mapTransaction(updatedTransactionEntity));
+    public ResponseEntity<Transaction> updateTransaction(@PathVariable Long id, @RequestBody TransactionPatchRequest transactionPatchRequest) {
+        return ResponseEntity.ok(mapTransaction(transactionService.update(id, transactionPatchRequest.amount(), transactionPatchRequest.reference())));
     }
 
     private static Transaction mapTransaction(TransactionEntity entity) {
