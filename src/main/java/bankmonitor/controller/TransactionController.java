@@ -3,11 +3,9 @@ package bankmonitor.controller;
 import bankmonitor.dto.Transaction;
 import bankmonitor.model.TransactionEntity;
 import bankmonitor.service.TransactionService;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -17,8 +15,8 @@ import java.util.stream.Collectors;
 
 import static bankmonitor.model.TransactionEntity.REFERENCE_KEY;
 
-@Controller
 @RequestMapping("/")
+@RestController
 public class TransactionController {
 
     private final TransactionService transactionService;
@@ -28,53 +26,31 @@ public class TransactionController {
     }
 
     @GetMapping("/transactions")
-    @ResponseBody
     public List<Transaction> getAllTransactions() {
         return transactionService.findAll().stream().map(
-                entity -> {
-                    JSONObject jsonData = new JSONObject(entity.getData());
-                    Integer amount;
-
-                    if (jsonData.has("amount")) {
-                        amount = jsonData.getInt("amount");
-                    } else {
-                        amount = -1;
-                    }
-
-                    String reference;
-                    if (jsonData.has(REFERENCE_KEY)) {
-                        reference = jsonData.getString(REFERENCE_KEY);
-                    } else {
-                        reference = "";
-                    }
-
-
-                    return new Transaction(entity.getId(), entity.getData(), amount, reference);
-                }
+                TransactionController::mapTransaction
         ).collect(Collectors.toList());
     }
 
     @GetMapping("/transactions/{id}")
-    @ResponseBody
-    public ResponseEntity<TransactionEntity> getAllTransactions(@PathVariable Long id) {
-        Optional<TransactionEntity> transaction = transactionService.findById(id);
+    public ResponseEntity<Transaction> getAllTransactions(@PathVariable Long id) {
+        Optional<Transaction> transaction = transactionService.findById(id)
+                .map(TransactionController::mapTransaction);
         return transaction.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
 
     @PostMapping("/transactions")
-    @ResponseBody
-    public TransactionEntity createTransaction(@RequestBody String jsonData) {
+    public Transaction createTransaction(@RequestBody String jsonData) {
         TransactionEntity data = new TransactionEntity();
         data.setTimestamp(LocalDateTime.now());
         data.setData(jsonData);
 
-        return transactionService.save(data);
+        return mapTransaction(transactionService.save(data));
     }
 
     @PutMapping("/transactions/{id}")
-    @ResponseBody
-    public ResponseEntity<TransactionEntity> updateTransaction(@PathVariable Long id, @RequestBody String update) {
+    public ResponseEntity<Transaction> updateTransaction(@PathVariable Long id, @RequestBody String update) {
 
         JSONObject updateJson = new JSONObject(update);
 
@@ -98,6 +74,27 @@ public class TransactionController {
         transactionEntity.setData(trdata.toString());
 
         TransactionEntity updatedTransactionEntity = transactionService.save(transactionEntity);
-        return ResponseEntity.ok(updatedTransactionEntity);
+        return ResponseEntity.ok(mapTransaction(updatedTransactionEntity));
+    }
+
+    private static Transaction mapTransaction(TransactionEntity entity) {
+        JSONObject jsonData = new JSONObject(entity.getData());
+        Integer amount;
+
+        if (jsonData.has("amount")) {
+            amount = jsonData.getInt("amount");
+        } else {
+            amount = -1;
+        }
+
+        String reference;
+        if (jsonData.has(REFERENCE_KEY)) {
+            reference = jsonData.getString(REFERENCE_KEY);
+        } else {
+            reference = "";
+        }
+
+
+        return new Transaction(entity.getId(), entity.getData(), amount, reference);
     }
 }

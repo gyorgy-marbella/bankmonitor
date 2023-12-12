@@ -39,10 +39,6 @@ public class TransactionEntity {
         this.data = data;
     }
 
-
-
-
-
     public void setTimestamp(LocalDateTime now) {
         this.timestamp = now;
     }

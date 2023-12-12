@@ -1,5 +1,6 @@
 package bankmonitor.controller;
 
+import bankmonitor.dto.Transaction;
 import bankmonitor.model.TransactionEntity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -114,27 +115,26 @@ class TransactionControllerIntegrationTest {
             })
     public void createTransactionTest(String data) {
         //given + when
-        TransactionEntity response = given()
+        Transaction response = given()
                 .contentType(ContentType.JSON)
                 .when()
                 .body(data)
                 .post(PATH_TRANSACTIONS)
                 .then()
                 .assertThat().statusCode(HttpStatus.OK.value())
-                .extract().as(TransactionEntity.class);
+                .extract().as(Transaction.class);
 
         //then
-        TransactionEntity result = given()
+        Transaction result = given()
                 .contentType(ContentType.JSON)
                 .when()
                 .body(data)
-                .get(PATH_TRANSACTIONS + "/{id}", response.getId())
+                .get(PATH_TRANSACTIONS + "/{id}", response.id())
                 .then()
                 .assertThat().statusCode(HttpStatus.OK.value())
-                .extract().as(TransactionEntity.class);
+                .extract().as(Transaction.class);
 
-        JSONAssert.assertEquals(data, result.getData(), true);
-
+        JSONAssert.assertEquals(data, result.data(), true);
     }
 
     @Test
