@@ -1,43 +1,63 @@
 package bankmonitor.controller;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-
+import bankmonitor.dto.Transaction;
 import bankmonitor.model.TransactionEntity;
-import org.springframework.beans.factory.annotation.Autowired;
+import bankmonitor.service.TransactionService;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
-import org.json.JSONObject;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-import bankmonitor.repository.TransactionRepository;
+import static bankmonitor.model.TransactionEntity.REFERENCE_KEY;
 
 @Controller
 @RequestMapping("/")
 public class TransactionController {
 
-    @Autowired
-    private TransactionRepository transactionRepository;
+    private final TransactionService transactionService;
+
+    public TransactionController(TransactionService transactionRepository) {
+        this.transactionService = transactionRepository;
+    }
 
     @GetMapping("/transactions")
     @ResponseBody
-    public List<TransactionEntity> getAllTransactions() {
-        return transactionRepository.findAll();
+    public List<Transaction> getAllTransactions() {
+        return transactionService.findAll().stream().map(
+                entity -> {
+                    JSONObject jsonData = new JSONObject(entity.getData());
+                    Integer amount;
+
+                    if (jsonData.has("amount")) {
+                        amount = jsonData.getInt("amount");
+                    } else {
+                        amount = -1;
+                    }
+
+                    String reference;
+                    if (jsonData.has(REFERENCE_KEY)) {
+                        reference = jsonData.getString(REFERENCE_KEY);
+                    } else {
+                        reference = "";
+                    }
+
+
+                    return new Transaction(entity.getId(), entity.getData(), amount, reference);
+                }
+        ).collect(Collectors.toList());
     }
 
     @GetMapping("/transactions/{id}")
     @ResponseBody
     public ResponseEntity<TransactionEntity> getAllTransactions(@PathVariable Long id) {
-        Optional<TransactionEntity> transaction = transactionRepository.findById(id);
+        Optional<TransactionEntity> transaction = transactionService.findById(id);
         return transaction.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
@@ -49,7 +69,7 @@ public class TransactionController {
         data.setTimestamp(LocalDateTime.now());
         data.setData(jsonData);
 
-        return transactionRepository.save(data);
+        return transactionService.save(data);
     }
 
     @PutMapping("/transactions/{id}")
@@ -58,7 +78,7 @@ public class TransactionController {
 
         JSONObject updateJson = new JSONObject(update);
 
-        Optional<TransactionEntity> data = transactionRepository.findById(id);
+        Optional<TransactionEntity> data = transactionService.findById(id);
 
         if (!data.isPresent()) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -71,13 +91,13 @@ public class TransactionController {
             trdata.put("amount", updateJson.getInt("amount"));
         }
 
-        if (updateJson.has(TransactionEntity.REFERENCE_KEY)) {
-            trdata.put(TransactionEntity.REFERENCE_KEY, updateJson.getString(TransactionEntity.REFERENCE_KEY));
+        if (updateJson.has(REFERENCE_KEY)) {
+            trdata.put(REFERENCE_KEY, updateJson.getString(REFERENCE_KEY));
         }
 
         transactionEntity.setData(trdata.toString());
 
-        TransactionEntity updatedTransactionEntity = transactionRepository.save(transactionEntity);
+        TransactionEntity updatedTransactionEntity = transactionService.save(transactionEntity);
         return ResponseEntity.ok(updatedTransactionEntity);
     }
 }

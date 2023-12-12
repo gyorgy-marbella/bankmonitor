@@ -1,5 +1,6 @@
 package bankmonitor.controller;
 
+import bankmonitor.model.TransactionEntity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.AfterAll;
@@ -17,6 +18,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class TransactionControllerIntegrationTest {
@@ -69,26 +71,31 @@ class TransactionControllerIntegrationTest {
         JSONAssert.assertEquals("""
                 [
                   {
+                    "id": 1,
                     "data": "{ \\"amount\\": 100, \\"reference\\": \\"BM_2023_101\\" }",
                     "reference": "BM_2023_101",
                     "amount": 100
                   },
                   {
+                    "id": 2,
                     "data": "{ \\"amount\\": 3333, \\"reference\\": \\"\\", \\"sender\\": \\"Bankmonitor\\" }",
                     "reference": "",
                     "amount": 3333
                   },
                   {
+                    "id": 3,
                     "data": "{ \\"amount\\": -100, \\"reference\\": \\"BM_2023_101_BACK\\", \\"reason\\": \\"duplicate\\" }",
                     "reference": "BM_2023_101_BACK",
                     "amount": -100
                   },
                   {
+                    "id": 4,
                     "data": "{ \\"amount\\": 12345, \\"reference\\": \\"BM_2023_105\\" }",
                     "reference": "BM_2023_105",
                     "amount": 12345
                   },
                   {
+                    "id": 5,
                     "data": "{ \\"amount\\": 54321, \\"sender\\": \\"Bankmonitor\\", \\"recipient\\": \\"John Doe\\" }",
                     "reference": "",
                     "amount": 54321
@@ -107,17 +114,26 @@ class TransactionControllerIntegrationTest {
             })
     public void createTransactionTest(String data) {
         //given + when
-        String response = given()
+        TransactionEntity response = given()
                 .contentType(ContentType.JSON)
                 .when()
                 .body(data)
                 .post(PATH_TRANSACTIONS)
                 .then()
                 .assertThat().statusCode(HttpStatus.OK.value())
-                .extract().response().asString();
+                .extract().as(TransactionEntity.class);
 
         //then
+        TransactionEntity result = given()
+                .contentType(ContentType.JSON)
+                .when()
+                .body(data)
+                .get(PATH_TRANSACTIONS + "/{id}", response.getId())
+                .then()
+                .assertThat().statusCode(HttpStatus.OK.value())
+                .extract().as(TransactionEntity.class);
 
+        JSONAssert.assertEquals(data, result.getData(), true);
 
     }
 
