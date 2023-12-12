@@ -171,4 +171,19 @@ class TransactionControllerIntegrationTest {
         JSONAssert.assertEquals(expected, result.data(), true);
     }
 
+    @Test
+    public void updateTransactionWithUnknownIdTest() {
+        //given
+        Long unknownId = 9999999L;
+        String updatedData = "{ \"amount\": 10000, \"reference\": \"NewRef\" }";
+
+        given()
+                .contentType(ContentType.JSON)
+                .when()
+                .body(updatedData)
+                .put(PATH_TRANSACTIONS + "/{id}", unknownId)
+                .then()
+                .assertThat().statusCode(HttpStatus.BAD_REQUEST.value());
+    }
+
 }
