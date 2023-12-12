@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-public class TransactionTest {
+public class TransactionEntityTest {
 
   @Test
   void test_getData() {

@@ -13,7 +13,7 @@ import org.json.JSONObject;
 
 @Entity
 @Table(name = "transaction")
-public class Transaction {
+public class TransactionEntity {
 
     public static final String REFERENCE_KEY = "reference";
 
@@ -27,7 +27,7 @@ public class Transaction {
     @Column(name = "data")
     private String data;
 
-    public Transaction() {
+    public TransactionEntity() {
     }
 
     public String getData() {
