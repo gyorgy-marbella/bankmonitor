@@ -10,6 +10,8 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.hibernate.annotations.Generated;
+import org.hibernate.annotations.GenerationTime;
 import org.json.JSONObject;
 
 @Entity
@@ -23,6 +25,7 @@ public class TransactionEntity {
     private long id;
 
     @Column(name = "created_at")
+    @Generated(GenerationTime.INSERT)
     private LocalDateTime timestamp;
 
     @Column(name = "data")

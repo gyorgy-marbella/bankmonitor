@@ -4,10 +4,7 @@ import bankmonitor.dto.Transaction;
 import bankmonitor.model.TransactionEntity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -22,6 +19,7 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class TransactionControllerIntegrationTest {
 
     private final static String BASE_URI = "http://localhost";
@@ -58,6 +56,7 @@ class TransactionControllerIntegrationTest {
     }
 
     @Test
+    @Order(1)
     public void getTransactionsTest() {
         //given + when
         String response = given()
@@ -128,7 +127,6 @@ class TransactionControllerIntegrationTest {
         Transaction result = given()
                 .contentType(ContentType.JSON)
                 .when()
-                .body(data)
                 .get(PATH_TRANSACTIONS + "/{id}", response.id())
                 .then()
                 .assertThat().statusCode(HttpStatus.OK.value())
@@ -139,7 +137,37 @@ class TransactionControllerIntegrationTest {
 
     @Test
     public void updateTransactionTest() {
+        //given + when
+        Transaction createdTransaction = given()
+                .contentType(ContentType.JSON)
+                .when()
+                .body("{ \"amount\": 100, \"reference\": \"BM_2023_101\" }")
+                .post(PATH_TRANSACTIONS)
+                .then()
+                .assertThat().statusCode(HttpStatus.OK.value())
+                .extract().as(Transaction.class);
 
+        //when
+        String updatedData = "{ \"amount\": 10000, \"reference\": \"NewRef\" }";
+        Transaction updatedTransaction = given()
+                .contentType(ContentType.JSON)
+                .when()
+                .body(updatedData)
+                .put(PATH_TRANSACTIONS + "/{id}", createdTransaction.id())
+                .then()
+                .assertThat().statusCode(HttpStatus.OK.value())
+                .extract().as(Transaction.class);
+
+        //then
+        Transaction result = given()
+                .contentType(ContentType.JSON)
+                .when()
+                .get(PATH_TRANSACTIONS + "/{id}", createdTransaction.id())
+                .then()
+                .assertThat().statusCode(HttpStatus.OK.value())
+                .extract().as(Transaction.class);
+
+        JSONAssert.assertEquals(updatedData, result.data(), true);
     }
 
 }

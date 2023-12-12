@@ -43,7 +43,6 @@ public class TransactionController {
     @PostMapping("/transactions")
     public Transaction createTransaction(@RequestBody String jsonData) {
         TransactionEntity data = new TransactionEntity();
-        data.setTimestamp(LocalDateTime.now());
         data.setData(jsonData);
 
         return mapTransaction(transactionService.save(data));
