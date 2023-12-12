@@ -30,11 +30,6 @@ public class Transaction {
     public Transaction() {
     }
 
-    public Transaction(String jsonData) {
-        this.timestamp = LocalDateTime.now();
-        this.data = jsonData;
-    }
-
     public String getData() {
         return this.data;
     }
@@ -60,5 +55,9 @@ public class Transaction {
         } else {
             return "";
         }
+    }
+
+    public void setTimestamp(LocalDateTime now) {
+        this.timestamp = now;
     }
 }

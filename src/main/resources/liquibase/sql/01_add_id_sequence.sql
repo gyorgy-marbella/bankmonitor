@@ -1,0 +1,2 @@
+CREATE SEQUENCE transaction_id_seq START WITH 100000;
+
