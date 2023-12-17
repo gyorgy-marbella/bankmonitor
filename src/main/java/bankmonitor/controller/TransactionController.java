@@ -43,10 +43,16 @@ public class TransactionController {
         return new ResponseEntity<>(transactionMapper.apply(transactionEntity), HttpStatus.CREATED);
     }
 
+    @Deprecated(since = "Use PATCH method instead")
     @PutMapping("/transactions/{id}")
     public ResponseEntity<Transaction> updateTransaction(@PathVariable Long id, @RequestBody TransactionPatchRequest transactionPatchRequest) {
         var transactionEntity = transactionService.update(id, transactionPatchRequest.amount(), transactionPatchRequest.reference());
         return ResponseEntity.ok(transactionMapper.apply(transactionEntity));
     }
 
+    @PatchMapping("/transactions/{id}")
+    public ResponseEntity<Transaction> patchTransaction(@PathVariable Long id, @RequestBody TransactionPatchRequest transactionPatchRequest) {
+        var transactionEntity = transactionService.update(id, transactionPatchRequest.amount(), transactionPatchRequest.reference());
+        return ResponseEntity.ok(transactionMapper.apply(transactionEntity));
+    }
 }

@@ -120,11 +120,47 @@ class TransactionControllerIntegrationTest extends AbstractIntegrationTest {
 
         //when
         String updatedData = "{ \"amount\": 10000, \"reference\": \"NewRef\" }";
-        Transaction updatedTransaction = given()
+        given()
                 .contentType(ContentType.JSON)
                 .when()
                 .body(updatedData)
                 .put(PATH_TRANSACTIONS + "/{id}", createdTransaction.id())
+                .then()
+                .assertThat().statusCode(HttpStatus.OK.value())
+                .extract().as(Transaction.class);
+
+        //then
+        Transaction result = given()
+                .contentType(ContentType.JSON)
+                .when()
+                .get(PATH_TRANSACTIONS + "/{id}", createdTransaction.id())
+                .then()
+                .assertThat().statusCode(HttpStatus.OK.value())
+                .extract().as(Transaction.class);
+
+        String expected = "{ \"amount\": 10000, \"reference\": \"NewRef\", \"sender\": \"Bankmonitor\" }";
+        JSONAssert.assertEquals(expected, result.data(), true);
+    }
+
+    @Test
+    public void patchTransactionTest() {
+        //given + when
+        Transaction createdTransaction = given()
+                .contentType(ContentType.JSON)
+                .when()
+                .body("{ \"amount\": 3333, \"reference\": \"\", \"sender\": \"Bankmonitor\" }")
+                .post(PATH_TRANSACTIONS)
+                .then()
+                .assertThat().statusCode(HttpStatus.CREATED.value())
+                .extract().as(Transaction.class);
+
+        //when
+        String updatedData = "{ \"amount\": 10000, \"reference\": \"NewRef\" }";
+        given()
+                .contentType(ContentType.JSON)
+                .when()
+                .body(updatedData)
+                .patch(PATH_TRANSACTIONS + "/{id}", createdTransaction.id())
                 .then()
                 .assertThat().statusCode(HttpStatus.OK.value())
                 .extract().as(Transaction.class);
