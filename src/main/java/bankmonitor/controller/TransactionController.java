@@ -1,11 +1,13 @@
 package bankmonitor.controller;
 
 import bankmonitor.dto.Transaction;
+import bankmonitor.dto.TransactionCreateRequest;
 import bankmonitor.dto.TransactionPatchRequest;
 import bankmonitor.model.TransactionEntity;
 import bankmonitor.service.TransactionService;
 import org.json.JSONObject;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +18,7 @@ import static bankmonitor.model.TransactionEntity.REFERENCE_KEY;
 
 @RequestMapping("/")
 @RestController
+@Validated
 public class TransactionController {
 
     private final TransactionService transactionService;
@@ -40,11 +43,8 @@ public class TransactionController {
 
 
     @PostMapping("/transactions")
-    public Transaction createTransaction(@RequestBody String jsonData) {
-        TransactionEntity data = new TransactionEntity();
-        data.setData(jsonData);
-
-        return mapTransaction(transactionService.createOrUpdate(data));
+    public Transaction createTransaction(@RequestBody TransactionCreateRequest transactionCreateRequest) {
+        return mapTransaction(transactionService.create(transactionCreateRequest));
     }
 
     @PutMapping("/transactions/{id}")

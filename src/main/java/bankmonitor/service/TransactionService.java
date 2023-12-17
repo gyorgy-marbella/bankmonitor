@@ -1,11 +1,15 @@
 package bankmonitor.service;
 
+import bankmonitor.dto.TransactionCreateRequest;
+import bankmonitor.exceptionhandler.ValidationException;
 import bankmonitor.model.TransactionEntity;
 import bankmonitor.repository.TransactionRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hibernate.exception.ConstraintViolationException;
 import org.json.JSONObject;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
@@ -19,8 +23,11 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
 
-    public TransactionService(TransactionRepository transactionRepository) {
+    private final ObjectMapper objectMapper;
+
+    public TransactionService(TransactionRepository transactionRepository, ObjectMapper objectMapper) {
         this.transactionRepository = transactionRepository;
+        this.objectMapper = objectMapper;
     }
 
     public List<TransactionEntity> findAll() {
@@ -31,20 +38,33 @@ public class TransactionService {
         return transactionRepository.findById(id);
     }
 
+    public TransactionEntity getById(Long id) {
+        return transactionRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException("TransactionEntity with id: " + id + " not found")
+        );
+    }
 
-    public TransactionEntity createOrUpdate(TransactionEntity data) {
+    public TransactionEntity create(TransactionCreateRequest transactionCreateRequest) {
+        TransactionEntity data = new TransactionEntity();
+        String json;
+
+        try {
+            json = objectMapper.writeValueAsString(transactionCreateRequest);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (json.length() > 1000) {
+            throw new ValidationException();
+        }
+
+        data.setData(json);
         return transactionRepository.save(data);
     }
 
     public TransactionEntity update(Long id, Integer amount, String reference) {
-        Optional<TransactionEntity> data = findById(id);
+        TransactionEntity transactionEntity = getById(id);
 
-        //add exception handler
-        if (!data.isPresent()) {
-            throw new EntityNotFoundException();
-        }
-
-        TransactionEntity transactionEntity = data.get();
         JSONObject trdata = new JSONObject(transactionEntity.getData());
 
         if (Objects.nonNull(amount)) {
@@ -57,7 +77,7 @@ public class TransactionService {
 
         transactionEntity.setData(trdata.toString());
 
-        return createOrUpdate(transactionEntity);
+        return transactionRepository.save(transactionEntity);
     }
 
 }

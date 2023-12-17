@@ -111,7 +111,9 @@ class TransactionControllerIntegrationTest {
             "{ \"amount\": -100, \"reference\": \"BM_2023_101_BACK\", \"reason\": \"duplicate\" }",
             "{ \"amount\": 12345, \"reference\": \"BM_2023_105\" }",
             "{ \"amount\": 54321, \"sender\": \"Bankmonitor\", \"recipient\": \"John Doe\" }",
-            })
+            "{ \"amount\": 54321, \"sender\": \"Bankmonitor\", \"recipient\": \"John Doe\", \"dynamicField\": \"something\" }",
+            "{ \"amount\": 54321, \"sender\": \"Bankmonitor\", \"recipient\": \"John Doe\", \"dynamicFieldNested\": { \"dynamicField\": \"testValue\"} }",
+    })
     public void createTransactionTest(String data) {
         //given + when
         Transaction response = given()
@@ -177,13 +179,17 @@ class TransactionControllerIntegrationTest {
         Long unknownId = 9999999L;
         String updatedData = "{ \"amount\": 10000, \"reference\": \"NewRef\" }";
 
-        given()
+        String response = given()
                 .contentType(ContentType.JSON)
                 .when()
                 .body(updatedData)
                 .put(PATH_TRANSACTIONS + "/{id}", unknownId)
                 .then()
-                .assertThat().statusCode(HttpStatus.BAD_REQUEST.value());
+                .assertThat()
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .extract().response().asString();
+
+        JSONAssert.assertEquals("{\"message\": \"TransactionEntity with id: 9999999 not found\"}", response, true);
     }
 
 }
