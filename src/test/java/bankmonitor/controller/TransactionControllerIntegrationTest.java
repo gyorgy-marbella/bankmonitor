@@ -28,8 +28,10 @@ class TransactionControllerIntegrationTest {
     @LocalServerPort
     private int port;
 
+    public static final String DOCKER_POSTGRES_15_ALPINE = "postgres:15-alpine";
+
     private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>(
-            "postgres:15-alpine"
+            DOCKER_POSTGRES_15_ALPINE
     );
 
     @BeforeAll
@@ -122,7 +124,7 @@ class TransactionControllerIntegrationTest {
                 .body(data)
                 .post(PATH_TRANSACTIONS)
                 .then()
-                .assertThat().statusCode(HttpStatus.OK.value())
+                .assertThat().statusCode(HttpStatus.CREATED.value())
                 .extract().as(Transaction.class);
 
         //then
@@ -146,7 +148,7 @@ class TransactionControllerIntegrationTest {
                 .body("{ \"amount\": 3333, \"reference\": \"\", \"sender\": \"Bankmonitor\" }")
                 .post(PATH_TRANSACTIONS)
                 .then()
-                .assertThat().statusCode(HttpStatus.OK.value())
+                .assertThat().statusCode(HttpStatus.CREATED.value())
                 .extract().as(Transaction.class);
 
         //when
@@ -190,6 +192,16 @@ class TransactionControllerIntegrationTest {
                 .extract().response().asString();
 
         JSONAssert.assertEquals("{\"message\": \"TransactionEntity with id: 9999999 not found\"}", response, true);
+    }
+
+    @Test
+    public void createTransactionWithLargeSizeTest() {
+
+    }
+
+    @Test
+    public void updateTransactionWithLargeSizeTest() {
+
     }
 
 }

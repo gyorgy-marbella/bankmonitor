@@ -6,36 +6,27 @@ import bankmonitor.model.TransactionEntity;
 import bankmonitor.repository.TransactionRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hibernate.exception.ConstraintViolationException;
+import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
-import static bankmonitor.model.TransactionEntity.REFERENCE_KEY;
+import static bankmonitor.service.TransactionMapper.AMOUNT_KEY;
+import static bankmonitor.service.TransactionMapper.REFERENCE_KEY;
 
 @Service
+@RequiredArgsConstructor
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
 
     private final ObjectMapper objectMapper;
 
-    public TransactionService(TransactionRepository transactionRepository, ObjectMapper objectMapper) {
-        this.transactionRepository = transactionRepository;
-        this.objectMapper = objectMapper;
-    }
-
     public List<TransactionEntity> findAll() {
         return transactionRepository.findAll();
-    }
-
-    public Optional<TransactionEntity> findById(Long id) {
-        return transactionRepository.findById(id);
     }
 
     public TransactionEntity getById(Long id) {
@@ -55,7 +46,7 @@ public class TransactionService {
         }
 
         if (json.length() > 1000) {
-            throw new ValidationException();
+            throw new ValidationException("Invalid json data content size maximum: " + 1000 + ", current: " + json.length());
         }
 
         data.setData(json);
@@ -65,17 +56,23 @@ public class TransactionService {
     public TransactionEntity update(Long id, Integer amount, String reference) {
         TransactionEntity transactionEntity = getById(id);
 
-        JSONObject trdata = new JSONObject(transactionEntity.getData());
+        var trdata = new JSONObject(transactionEntity.getData());
 
         if (Objects.nonNull(amount)) {
-            trdata.put("amount", amount);
+            trdata.put(AMOUNT_KEY, amount);
         }
 
         if (Objects.nonNull(reference)) {
             trdata.put(REFERENCE_KEY, reference);
         }
 
-        transactionEntity.setData(trdata.toString());
+        String updatedJson = trdata.toString();
+
+        if (updatedJson.length() > 1000) {
+            throw new ValidationException("Invalid json data content size maximum: " + 1000 + ", current: " + updatedJson.length());
+        }
+
+        transactionEntity.setData(updatedJson);
 
         return transactionRepository.save(transactionEntity);
     }

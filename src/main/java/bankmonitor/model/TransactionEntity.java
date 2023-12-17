@@ -18,8 +18,6 @@ import org.json.JSONObject;
 @Table(name = "transaction")
 public class TransactionEntity {
 
-    public static final String REFERENCE_KEY = "reference";
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
@@ -40,10 +38,6 @@ public class TransactionEntity {
 
     public void setData(String data) {
         this.data = data;
-    }
-
-    public void setTimestamp(LocalDateTime now) {
-        this.timestamp = now;
     }
 
     public long getId() {
