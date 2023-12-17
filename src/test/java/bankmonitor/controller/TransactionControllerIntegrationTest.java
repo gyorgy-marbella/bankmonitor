@@ -1,5 +1,6 @@
 package bankmonitor.controller;
 
+import bankmonitor.AbstractIntegrationTest;
 import bankmonitor.dto.Transaction;
 import bankmonitor.model.TransactionEntity;
 import io.restassured.RestAssured;
@@ -18,44 +19,10 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class TransactionControllerIntegrationTest {
 
-    private final static String BASE_URI = "http://localhost";
-    public static final String PATH_TRANSACTIONS = "/transactions";
+class TransactionControllerIntegrationTest extends AbstractIntegrationTest {
 
-    @LocalServerPort
-    private int port;
-
-    public static final String DOCKER_POSTGRES_15_ALPINE = "postgres:15-alpine";
-
-    private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>(
-            DOCKER_POSTGRES_15_ALPINE
-    );
-
-    @BeforeAll
-    static void beforeAll() {
-        POSTGRES.start();
-    }
-
-    @AfterAll
-    static void afterAll() {
-        POSTGRES.stop();
-    }
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.datasource.username", POSTGRES::getUsername);
-        registry.add("spring.datasource.password", POSTGRES::getPassword);
-    }
-
-    @BeforeEach
-    public void configureRestAssured() {
-        RestAssured.baseURI = BASE_URI;
-        RestAssured.port = port;
-    }
+    private static final String PATH_TRANSACTIONS = "/transactions";
 
     @Test
     @Order(1)
