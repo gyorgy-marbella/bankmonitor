@@ -2,22 +2,16 @@ package bankmonitor.controller;
 
 import bankmonitor.AbstractIntegrationTest;
 import bankmonitor.dto.Transaction;
-import bankmonitor.model.TransactionEntity;
-import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.skyscreamer.jsonassert.JSONAssert;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThat;
 
 
 class TransactionControllerIntegrationTest extends AbstractIntegrationTest {
@@ -198,13 +192,48 @@ class TransactionControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void createTransactionWithLargeSizeTest() {
+    public void createTransactionWithLargeReferenceTest() {
+        //given + when
+        String largeRef = RandomStringUtils.random(999, true, true);
+        String response = given()
+                .contentType(ContentType.JSON)
+                .when()
+                .body("{ \"amount\": 3333, \"reference\": \" "+ largeRef + "\", \"sender\": \"Bankmonitor\" }")
+                .post(PATH_TRANSACTIONS)
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .extract().response().asString();
 
+        JSONAssert.assertEquals("{\"message\": \"Invalid json data content size maximum: 1000, current: 1053\"}", response, true);
     }
 
     @Test
     public void updateTransactionWithLargeSizeTest() {
+        //given + when
+        Transaction createdTransaction = given()
+                .contentType(ContentType.JSON)
+                .when()
+                .body("{ \"amount\": 3333, \"reference\": \"\", \"sender\": \"Bankmonitor\" }")
+                .post(PATH_TRANSACTIONS)
+                .then()
+                .assertThat().statusCode(HttpStatus.CREATED.value())
+                .extract().as(Transaction.class);
 
+        String largeRef = RandomStringUtils.random(999, true, true);
+
+        //when
+        String updatedData = "{ \"amount\": 10000, \"reference\": \"" + largeRef + "\" }";
+        String response = given()
+                .contentType(ContentType.JSON)
+                .when()
+                .body(updatedData)
+                .put(PATH_TRANSACTIONS + "/{id}", createdTransaction.id())
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .extract().response().asString();
+
+        JSONAssert.assertEquals("{\"message\": \"Invalid json data content size maximum: 1000, current: 1053\"}", response, true);
     }
 
 }

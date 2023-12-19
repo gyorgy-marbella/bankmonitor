@@ -45,9 +45,7 @@ public class TransactionService {
             throw new RuntimeException(e);
         }
 
-        if (json.length() > 1000) {
-            throw new ValidationException("Invalid json data content size maximum: " + 1000 + ", current: " + json.length());
-        }
+        validateDataSize(json);
 
         data.setData(json);
         return transactionRepository.save(data);
@@ -68,13 +66,16 @@ public class TransactionService {
 
         String updatedJson = trdata.toString();
 
-        if (updatedJson.length() > 1000) {
-            throw new ValidationException("Invalid json data content size maximum: " + 1000 + ", current: " + updatedJson.length());
-        }
+        validateDataSize(updatedJson);
 
         transactionEntity.setData(updatedJson);
 
         return transactionRepository.save(transactionEntity);
     }
 
+    private static void validateDataSize(String json) {
+        if (json.length() > 1000) {
+            throw new ValidationException("Invalid json data content size maximum: " + 1000 + ", current: " + json.length());
+        }
+    }
 }
